@@ -2185,6 +2185,8 @@ window.addEventListener('click', () => {
 
     const overlay = document.getElementById('scene-transition');
     overlay.classList.add('active');
+    // Sonido de transición VHS
+    playVHSTransition();
 
     setTimeout(() => {
       if (d.target === 'ancon') {
@@ -2217,6 +2219,9 @@ window.addEventListener('click', () => {
         camera.position.set(0, 1.6, 15);
       }
       document.getElementById('ui-layer').classList.add('visible');
+      // Screen shake
+      renderer.domElement.classList.add('shaking');
+      setTimeout(() => renderer.domElement.classList.remove('shaking'), 300);
 
       setTimeout(() => {
         overlay.classList.remove('active');
@@ -2259,8 +2264,9 @@ document.getElementById('close-modal-btn').addEventListener('click', () => {
   controls.lock();
 });
 
-// Sonido blip estilo Undertale
+// Sonido blip estilo Undertale con reverb
 let blipCtx = null;
+let blipReverbNode = null;
 function playBlip() {
   try {
     if (!blipCtx) blipCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2270,13 +2276,70 @@ function playBlip() {
     osc.type = 'square';
     osc.frequency.setValueAtTime(800 + Math.random() * 200, blipCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(400, blipCtx.currentTime + 0.03);
-    gain.gain.setValueAtTime(0.06, blipCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, blipCtx.currentTime + 0.04);
+    gain.gain.setValueAtTime(0.05, blipCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, blipCtx.currentTime + 0.06);
     osc.connect(gain);
+    // Delay para simular reverb
+    const delay = blipCtx.createDelay(0.1);
+    delay.delayTime.value = 0.04;
+    const delayGain = blipCtx.createGain();
+    delayGain.gain.value = 0.15;
     gain.connect(blipCtx.destination);
+    gain.connect(delay);
+    delay.connect(delayGain);
+    delayGain.connect(blipCtx.destination);
     osc.start();
-    osc.stop(blipCtx.currentTime + 0.05);
+    osc.stop(blipCtx.currentTime + 0.08);
   } catch(e) {}
+}
+
+// Sonido de transición VHS
+function playVHSTransition() {
+  try {
+    if (!blipCtx) blipCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (blipCtx.state === 'suspended') blipCtx.resume();
+    const bufferSize = blipCtx.sampleRate * 0.3;
+    const buffer = blipCtx.createBuffer(1, bufferSize, blipCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufferSize * 0.15));
+    }
+    const source = blipCtx.createBufferSource();
+    source.buffer = buffer;
+    const filter = blipCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 2000;
+    filter.Q.value = 0.5;
+    const gain = blipCtx.createGain();
+    gain.gain.setValueAtTime(0.12, blipCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, blipCtx.currentTime + 0.3);
+    source.connect(filter);
+    filter.connect(gain);
+    gain.connect(blipCtx.destination);
+    source.start();
+  } catch(e) {}
+}
+
+// Timestamp estilo camarita
+let timestampInterval = null;
+function startTimestamp() {
+  const el = document.getElementById('vhs-timestamp');
+  if (!el) return;
+  el.style.display = 'block';
+  let seconds = 0;
+  if (timestampInterval) clearInterval(timestampInterval);
+  timestampInterval = setInterval(() => {
+    seconds++;
+    const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
+    const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+    const s = String(seconds % 60).padStart(2, '0');
+    el.textContent = `REC ${h}:${m}:${s}`;
+  }, 1000);
+}
+function stopTimestamp() {
+  const el = document.getElementById('vhs-timestamp');
+  if (el) el.style.display = 'none';
+  if (timestampInterval) { clearInterval(timestampInterval); timestampInterval = null; }
 }
 
 // Máquina de escribir
@@ -2340,6 +2403,8 @@ document.getElementById('enter-portal-btn').addEventListener('click', () => {
   } catch (e) {
     console.error("Error al iniciar el audio:", e);
   }
+  // Iniciar timestamp
+  startTimestamp();
 
   isTransitioning = true;
   if (document.activeElement) document.activeElement.blur();
@@ -2509,6 +2574,14 @@ function animate() {
     }
     verts.needsUpdate = true;
 
+    // Niebla animada (densidad oscilante)
+    if (scene.fog) {
+      scene.fog.density = 0.022 + Math.sin(t * 0.3) * 0.003;
+    }
+
+    // Flicker sutil del sol (como si la memoria parpadeara)
+    sunLight.intensity = 2.5 + Math.sin(t * 7.3) * 0.08 + Math.sin(t * 13.1) * 0.05;
+
     // Las luces puntuales ahora son solo de acento, no principales
     // El sol y el relleno son constantes — sin cambio en loop
 
@@ -2670,8 +2743,15 @@ function animate() {
       if (foundInteractable) {
         crosshairLabel.textContent = labelText;
         crosshairLabel.style.display = 'block';
+        // Hover glow para objetos de memoria
+        if (d && d.isMemory) {
+          crosshairLabel.classList.add('glow');
+        } else {
+          crosshairLabel.classList.remove('glow');
+        }
       } else {
         crosshairLabel.style.display = 'none';
+        crosshairLabel.classList.remove('glow');
       }
     }
   }

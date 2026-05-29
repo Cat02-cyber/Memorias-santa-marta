@@ -488,3 +488,79 @@ html, body {
   0% { top: -60px; }
   100% { top: calc(100% + 60px); }
 }
+
+/* Screen shake */
+@keyframes screen-shake {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-2px, 1px); }
+  20% { transform: translate(2px, -1px); }
+  30% { transform: translate(-1px, 2px); }
+  40% { transform: translate(1px, -2px); }
+  50% { transform: translate(-2px, 0px); }
+  60% { transform: translate(2px, 1px); }
+  70% { transform: translate(0px, -1px); }
+  80% { transform: translate(-1px, 0px); }
+  90% { transform: translate(1px, 1px); }
+}
+.shaking {
+  animation: screen-shake 0.3s ease-out;
+}
+
+/* Chromatic aberration on modal */
+#memory-modal.active ~ #app {
+  animation: chromatic 0.15s ease-out;
+}
+@keyframes chromatic {
+  0% { filter: none; }
+  50% { filter: blur(0.5px) hue-rotate(5deg); }
+  100% { filter: none; }
+}
+
+/* VHS tracking on modal */
+#memory-modal.active::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+  animation: modal-tracking 1.5s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+@keyframes modal-tracking {
+  0% { top: -4px; }
+  100% { top: 100%; }
+}
+
+/* Timestamp */
+#vhs-timestamp {
+  position: fixed;
+  top: 70px;
+  right: 22px;
+  font-family: var(--font-vt);
+  font-size: 1rem;
+  color: var(--col-dim);
+  z-index: 10;
+  pointer-events: none;
+  display: none;
+  opacity: 0.7;
+}
+
+/* Hover glow on memory objects */
+#crosshair-label.glow {
+  box-shadow: 0 0 15px rgba(0,180,180,0.4), inset 0 0 10px rgba(0,180,180,0.1);
+  border-color: var(--col-cyan);
+}
+
+/* Flicker effect for lights */
+@keyframes light-flicker {
+  0%, 100% { opacity: 1; }
+  92% { opacity: 1; }
+  93% { opacity: 0.7; }
+  94% { opacity: 1; }
+  96% { opacity: 0.85; }
+  97% { opacity: 1; }
+}
+.flickering {
+  animation: light-flicker 3s infinite;
+}
