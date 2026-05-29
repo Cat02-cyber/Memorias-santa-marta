@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memorias de Santa Marta — Cápsula del Tiempo</title>
+  <meta name="description"
+    content="Una cápsula del tiempo digital que preserva memorias del Caribe samario. Espacio 3D navegable con fragmentos de audio, imagen y testimonio." />
+  <meta property="og:title" content="Memorias de Santa Marta" />
+  <meta property="og:description" content="Cápsula del tiempo digital — El Ancón, Santa Marta." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="./style.css">
+</head>
+
+<body class="crt">
+
+  <!-- PANTALLA DE CARGA — Estética VHS/Cassette -->
+  <div id="loading-screen">
+
+    <div class="vhs-header">
+      <span class="vhs-tag rec">● REC</span>
+      <span class="vhs-tag sp">SP ▶</span>
+      <span class="vhs-tag time">00:00:00:00</span>
+    </div>
+
+    <div class="vhs-body">
+      <div class="vhs-static-line"></div>
+      <h1 class="vhs-title">MEMORIAS<br><span>DE SANTA MARTA</span></h1>
+      <p class="vhs-subtitle">CÁPSULA DEL TIEMPO</p>
+      <p class="vhs-year">REC: 199X — DETERIORO DIGITAL ACTIVO</p>
+      <div class="vhs-separator"></div>
+      <button id="enter-portal-btn" class="portal-btn">
+        <span>▶ REPRODUCIR</span>
+      </button>
+      <button id="rewind-btn" class="portal-btn" style="display: none; margin-top: 10px;">
+        <span>◀ REBOBINAR AL INICIO</span>
+      </button>
+      <p class="vhs-warning">// ALGUNOS FRAGMENTOS NO PUDIERON RECUPERARSE //</p>
+    </div>
+
+    <div class="vhs-footer">
+      <span>T-120 · HI-FI · STEREO</span>
+      <span>REBOBINAR ANTES DE DEVOLVER</span>
+    </div>
+
+  </div>
+
+  <!-- UI en juego -->
+  <div id="ui-layer">
+    <div class="ui-title">MEMORIAS DE SANTA MARTA</div>
+    <div class="ui-sub">CÁPSULA / REC: 199X</div>
+    <div class="ui-controls">[W/A/S/D] CAMINAR &nbsp; [MOUSE] MIRAR &nbsp; [CLICK] INTERACTUAR</div>
+  </div>
+
+  <!-- Indicadores VHS en juego -->
+  <div id="vhs-play">▶ SP</div>
+  <div id="vhs-rec">● REC</div>
+
+  <!-- Mira -->
+  <div id="crosshair"></div>
+  <div id="crosshair-label"></div>
+
+  <!-- Modal de memoria -->
+  <div id="memory-modal">
+    <div class="modal-tape-label">
+      <span class="tape-rec">● MEMORIA FRAGMENTADA</span>
+      <div class="close-btn" id="close-modal-btn">[×]</div>
+    </div>
+    <h2 id="memory-title">_</h2>
+    <div id="memory-image-wrap">
+      <img id="memory-image" src="" alt="Registro de memoria" />
+      <div class="glitch-overlay"></div>
+    </div>
+    <div id="memory-content"></div>
+    <p class="tape-footer">// FIN DEL FRAGMENTO //</p>
+  </div>
+
+  <div id="scene-transition"></div>
+
+  <div id="app"></div>
+  <script type="module" src="./main.js"></script>
+</body>
+
+</html>
