@@ -49,6 +49,9 @@ function stopAmbience() {
   }
 }
 
+// Cache de buffers de audio para no recargarlos
+const audioBufferCache = {};
+
 function startSceneAmbience(sceneName) {
   stopAmbience();
   console.log('🎵 Cambiando ambiente a:', sceneName);
@@ -80,12 +83,23 @@ function startSceneAmbience(sceneName) {
   const fileArray = Array.isArray(files) ? files : [files];
 
   fileArray.forEach((file, idx) => {
+    // Si ya está en cache, usarlo directamente
+    if (audioBufferCache[file]) {
+      const sound = new THREE.Audio(listener);
+      sound.setBuffer(audioBufferCache[file]);
+      sound.setLoop(true);
+      sound.setVolume(idx === 0 ? 0.5 : 0.25);
+      sound.play();
+      currentAudioSources.push(sound);
+      return;
+    }
+
     audioLoader.load(file, (buffer) => {
+      audioBufferCache[file] = buffer;
       const sound = new THREE.Audio(listener);
       sound.setBuffer(buffer);
       sound.setLoop(true);
-      // Volumen: primer archivo más alto, segundo más bajo (capa secundaria)
-      sound.setVolume(idx === 0 ? 0.6 : 0.3);
+      sound.setVolume(idx === 0 ? 0.5 : 0.25);
       sound.play();
       currentAudioSources.push(sound);
     }, undefined, (err) => {
@@ -111,9 +125,9 @@ const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-bloomPass.threshold = 0.9;
-bloomPass.strength = 0.15;
-bloomPass.radius = 0.1;
+bloomPass.threshold = 0.95;
+bloomPass.strength = 0.1;
+bloomPass.radius = 0.08;
 composer.addPass(bloomPass);
 
 composer.setSize(window.innerWidth, window.innerHeight);
@@ -2343,13 +2357,18 @@ function stopTimestamp() {
 }
 
 // Máquina de escribir
-function typewriterEffect(el, text, speed = 28) {
+let lastBlipTime = 0;
+function typewriterEffect(el, text, speed = 35) {
   if (currentTypewriterTimer) clearInterval(currentTypewriterTimer);
   el.textContent = '';
   let i = 0;
   currentTypewriterTimer = setInterval(() => {
     el.textContent += text[i];
-    if (text[i] !== ' ') playBlip();
+    const now = Date.now();
+    if (text[i] !== ' ' && now - lastBlipTime > 60) {
+      playBlip();
+      lastBlipTime = now;
+    }
     i++;
     if (i >= text.length) {
       clearInterval(currentTypewriterTimer);
@@ -2503,6 +2522,7 @@ window.addEventListener('resize', () => {
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
   composer.setSize(window.innerWidth, window.innerHeight);
+  bloomPass.resolution.set(window.innerWidth / 2, window.innerHeight / 2);
 });
 
 // ============================================================
