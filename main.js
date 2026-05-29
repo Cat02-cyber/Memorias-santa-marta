@@ -2220,8 +2220,8 @@ window.addEventListener('click', () => {
 
       setTimeout(() => {
         overlay.classList.remove('active');
-      }, 100);
-    }, 500);
+      }, 200);
+    }, 300);
   } else if (d.isSwitch) {
     toggleMovie();
   } else if (d.isMemory) {
@@ -2416,10 +2416,10 @@ if (rewindBtn) {
 
       setTimeout(() => {
         overlay.classList.remove('active');
-      }, 100);
+      }, 200);
 
       controls.lock();
-    }, 500);
+    }, 300);
   });
 }
 

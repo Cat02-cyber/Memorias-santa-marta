@@ -442,13 +442,49 @@ html, body {
 #scene-transition {
   position: fixed;
   inset: 0;
-  background: #000;
   z-index: 100;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.5s ease;
+  transition: opacity 0.15s ease;
+  background: #000;
+  overflow: hidden;
 }
 #scene-transition.active {
   opacity: 1;
   pointer-events: all;
+}
+#scene-transition::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.15) 2px,
+    rgba(0,0,0,0.15) 4px
+  );
+  animation: vhs-scanlines 0.1s linear infinite;
+  pointer-events: none;
+}
+#scene-transition::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    transparent 0%,
+    rgba(255,255,255,0.03) 50%,
+    transparent 100%
+  );
+  height: 60px;
+  animation: vhs-tracking 0.4s linear infinite;
+  pointer-events: none;
+}
+@keyframes vhs-scanlines {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(4px); }
+}
+@keyframes vhs-tracking {
+  0% { top: -60px; }
+  100% { top: calc(100% + 60px); }
 }
