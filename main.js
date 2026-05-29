@@ -2249,7 +2249,12 @@ window.addEventListener('click', () => {
 });
 
 // Cerrar modal
+let currentTypewriterTimer = null;
 document.getElementById('close-modal-btn').addEventListener('click', () => {
+  if (currentTypewriterTimer) {
+    clearInterval(currentTypewriterTimer);
+    currentTypewriterTimer = null;
+  }
   modal.classList.remove('active');
   controls.lock();
 });
@@ -2276,13 +2281,17 @@ function playBlip() {
 
 // Máquina de escribir
 function typewriterEffect(el, text, speed = 28) {
+  if (currentTypewriterTimer) clearInterval(currentTypewriterTimer);
   el.textContent = '';
   let i = 0;
-  const timer = setInterval(() => {
+  currentTypewriterTimer = setInterval(() => {
     el.textContent += text[i];
     if (text[i] !== ' ') playBlip();
     i++;
-    if (i >= text.length) clearInterval(timer);
+    if (i >= text.length) {
+      clearInterval(currentTypewriterTimer);
+      currentTypewriterTimer = null;
+    }
   }, speed);
 }
 
@@ -2296,6 +2305,10 @@ document.addEventListener('keydown', e => {
   if (e.code === 'KeyS' || e.code === 'ArrowDown')  moveState.backward = true;
   if (e.code === 'KeyD' || e.code === 'ArrowRight') moveState.right    = true;
   if (e.code === 'Escape' && modal.classList.contains('active')) {
+    if (currentTypewriterTimer) {
+      clearInterval(currentTypewriterTimer);
+      currentTypewriterTimer = null;
+    }
     modal.classList.remove('active');
     controls.lock();
   }
