@@ -577,10 +577,10 @@ buildCanoe( 14, 6.5, 0.1);
 const dunlopGroup3 = new THREE.Group();
 {
   // ============================================================
-  //  EXTERIOR — Día soleado, fachada del Coliseo Menor
+  //  EXTERIOR — Fachada del Coliseo Menor
   // ============================================================
 
-  // Cielo diurno azul
+  // Cielo diurno
   const extSkyGeo = new THREE.SphereGeometry(150, 16, 8);
   const extSkyMat = new THREE.ShaderMaterial({
     side: THREE.BackSide,
@@ -589,178 +589,63 @@ const dunlopGroup3 = new THREE.Group();
       midColor:    { value: new THREE.Color(0x88bbee) },
       bottomColor: { value: new THREE.Color(0xddeeff) },
     },
-    vertexShader: `
-      varying vec3 vPos;
-      void main() {
-        vPos = (modelMatrix * vec4(position, 1.0)).xyz;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform vec3 topColor; uniform vec3 midColor; uniform vec3 bottomColor;
-      varying vec3 vPos;
-      void main() {
-        float h = normalize(vPos).y;
-        vec3 col = mix(bottomColor, midColor, smoothstep(-0.1, 0.3, h));
-        col = mix(col, topColor, smoothstep(0.3, 0.8, h));
-        gl_FragColor = vec4(col, 1.0);
-      }
-    `
+    vertexShader: `varying vec3 vPos; void main() { vPos = (modelMatrix * vec4(position, 1.0)).xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+    fragmentShader: `uniform vec3 topColor; uniform vec3 midColor; uniform vec3 bottomColor; varying vec3 vPos; void main() { float h = normalize(vPos).y; vec3 col = mix(bottomColor, midColor, smoothstep(-0.1, 0.3, h)); col = mix(col, topColor, smoothstep(0.3, 0.8, h)); gl_FragColor = vec4(col, 1.0); }`
   });
   dunlopGroup3.add(new THREE.Mesh(extSkyGeo, extSkyMat));
 
-  // Sol diurno
-  const extSun = new THREE.DirectionalLight(0xfff5e0, 2.2);
+  // Sol diurno y luz
+  const extSun = new THREE.DirectionalLight(0xfff5e0, 2.0);
   extSun.position.set(10, 20, 15);
   extSun.castShadow = true;
-  extSun.shadow.mapSize.set(1024, 1024);
-  extSun.shadow.camera.left = -25;
-  extSun.shadow.camera.right = 25;
-  extSun.shadow.camera.top = 20;
-  extSun.shadow.camera.bottom = -5;
   dunlopGroup3.add(extSun);
+  dunlopGroup3.add(new THREE.AmbientLight(0x8899bb, 0.9));
 
-  // Luz ambiental diurna
-  const extAmb = new THREE.AmbientLight(0x8899bb, 0.8);
-  dunlopGroup3.add(extAmb);
+  // Suelo
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), new THREE.MeshStandardMaterial({ color: 0x999988 }));
+  ground.rotation.x = -Math.PI / 2;
+  ground.receiveShadow = true;
+  dunlopGroup3.add(ground);
 
-  // Suelo de acera/calle
-  const extGroundMat = new THREE.MeshStandardMaterial({ color: 0x999988, roughness: 0.95 });
-  const extGround = new THREE.Mesh(new THREE.PlaneGeometry(60, 60), extGroundMat);
-  extGround.rotation.x = -Math.PI / 2;
-  extGround.position.y = -0.01;
-  extGround.receiveShadow = true;
-  dunlopGroup3.add(extGround);
-
-  // Banqueta elevada frente al coliseo
-  const sidewalkMat = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, roughness: 0.9 });
-  const sidewalk = new THREE.Mesh(new THREE.BoxGeometry(20, 0.15, 6), sidewalkMat);
-  sidewalk.position.set(0, 0.07, 16);
-  sidewalk.receiveShadow = true;
-  dunlopGroup3.add(sidewalk);
-
-  // ============================================================
-  //  FACHADA DEL COLISEO MENOR
-  // ============================================================
+  // Fachada
   const facadeGroup = new THREE.Group();
-  facadeGroup.position.set(0, 0, 10);
+  facadeGroup.position.set(0, 4.5, 10);
   dunlopGroup3.add(facadeGroup);
 
-  // Cuerpo principal de la fachada (blanco)
-  const facadeBodyMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.8 });
-  const facadeBody = new THREE.Mesh(new THREE.BoxGeometry(18, 9, 1), facadeBodyMat);
-  facadeBody.position.set(0, 4.5, 0);
-  facadeBody.castShadow = true;
-  facadeBody.receiveShadow = true;
-  facadeGroup.add(facadeBody);
+  // Cuerpo principal fachada
+  const body = new THREE.Mesh(new THREE.BoxGeometry(20, 9, 0.5), new THREE.MeshStandardMaterial({ color: 0xffffff }));
+  facadeGroup.add(body);
 
-  // Franja roja superior
-  const stripeRedMat = new THREE.MeshStandardMaterial({ color: 0xcc2222, roughness: 0.7 });
-  const stripeRed1 = new THREE.Mesh(new THREE.BoxGeometry(18, 0.6, 1.02), stripeRedMat);
-  stripeRed1.position.set(0, 8.2, 0);
-  facadeGroup.add(stripeRed1);
+  // Franjas Rojas (arriba y abajo)
+  const redMat = new THREE.MeshStandardMaterial({ color: 0xcc2222 });
+  [4, -4].forEach(y => {
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(20, 0.8, 0.6), redMat);
+    stripe.position.set(0, y, 0);
+    facadeGroup.add(stripe);
+  });
+  
+  // Franjas azules
+  const blueMat = new THREE.MeshStandardMaterial({ color: 0x2244aa });
+  [-1, 1].forEach(x => {
+    const stripe = new THREE.Mesh(new THREE.BoxGeometry(2, 9, 0.6), blueMat);
+    stripe.position.set(x * 6, 0, 0);
+    facadeGroup.add(stripe);
+  });
 
-  // Franja azul superior
-  const stripeBlueMat = new THREE.MeshStandardMaterial({ color: 0x2244aa, roughness: 0.7 });
-  const stripeBlue1 = new THREE.Mesh(new THREE.BoxGeometry(18, 0.6, 1.02), stripeBlueMat);
-  stripeBlue1.position.set(0, 7.4, 0);
-  facadeGroup.add(stripeBlue1);
-
-  // Franja roja media
-  const stripeRed2 = new THREE.Mesh(new THREE.BoxGeometry(18, 0.4, 1.02), stripeRedMat);
-  stripeRed2.position.set(0, 3.5, 0);
-  facadeGroup.add(stripeRed2);
-
-  // Franja azul inferior
-  const stripeBlue2 = new THREE.Mesh(new THREE.BoxGeometry(18, 0.6, 1.02), stripeBlueMat);
-  stripeBlue2.position.set(0, 0.3, 0);
-  facadeGroup.add(stripeBlue2);
-
-  // Franja roja inferior
-  const stripeRed3 = new THREE.Mesh(new THREE.BoxGeometry(18, 0.3, 1.02), stripeRedMat);
-  stripeRed3.position.set(0, 0, 0);
-  facadeGroup.add(stripeRed3);
-
-  // Techo triangular (frontón)
-  const roofShape = new THREE.Shape([
-    new THREE.Vector2(-9.5, 0),
-    new THREE.Vector2(0, 4),
-    new THREE.Vector2(9.5, 0),
-  ]);
-  const roofGeo = new THREE.ExtrudeGeometry(roofShape, { depth: 1.2, bevelEnabled: false });
-  const roofMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.8 });
-  const roof = new THREE.Mesh(roofGeo, roofMat);
-  roof.position.set(0, 9, -0.6);
-  roof.castShadow = true;
+  // Techo triangular
+  const roofShape = new THREE.Shape();
+  roofShape.moveTo(-10, 0);
+  roofShape.lineTo(0, 5);
+  roofShape.lineTo(10, 0);
+  const roofGeo = new THREE.ExtrudeGeometry(roofShape, { depth: 0.5, bevelEnabled: false });
+  const roof = new THREE.Mesh(roofGeo, new THREE.MeshStandardMaterial({ color: 0xcccccc }));
+  roof.position.set(0, 4.5, -0.25);
   facadeGroup.add(roof);
 
-  // Letrero "COLISEO MENOR" (canvas texture)
-  const signCanvas = document.createElement('canvas');
-  signCanvas.width = 512; signCanvas.height = 64;
-  const signCtx = signCanvas.getContext('2d');
-  signCtx.fillStyle = '#cc2222';
-  signCtx.fillRect(0, 0, 512, 64);
-  signCtx.fillStyle = '#ffffff';
-  signCtx.font = 'bold 40px Arial';
-  signCtx.textAlign = 'center';
-  signCtx.fillText('COLISEO MENOR', 256, 45);
-  const signTex = new THREE.CanvasTexture(signCanvas);
-  const signMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(8, 1),
-    new THREE.MeshBasicMaterial({ map: signTex })
-  );
-  signMesh.position.set(0, 5.5, 0.6);
-  facadeGroup.add(signMesh);
-
-  // Letrero "INDEPORTE" (más pequeño, arriba)
-  const indepCanvas = document.createElement('canvas');
-  indepCanvas.width = 256; indepCanvas.height = 32;
-  const indepCtx = indepCanvas.getContext('2d');
-  indepCtx.fillStyle = '#2244aa';
-  indepCtx.fillRect(0, 0, 256, 32);
-  indepCtx.fillStyle = '#ffffff';
-  indepCtx.font = 'bold 22px Arial';
-  indepCtx.textAlign = 'center';
-  indepCtx.fillText('INDEPORTE', 128, 22);
-  const indepTex = new THREE.CanvasTexture(indepCanvas);
-  const indepMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(4, 0.5),
-    new THREE.MeshBasicMaterial({ map: indepTex })
-  );
-  indepMesh.position.set(0, 6.5, 0.6);
-  facadeGroup.add(indepMesh);
-
-  // Ventanas superiores (celosías oscuras)
-  const ventMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
-  [-6, -3, 0, 3, 6].forEach(x => {
-    const vent = new THREE.Mesh(new THREE.BoxGeometry(1.5, 2, 0.1), ventMat);
-    vent.position.set(x, 7.8, 0.5);
-    facadeGroup.add(vent);
-  });
-
-  // Entrada abierta (hueco oscuro)
-  const entranceMat = new THREE.MeshBasicMaterial({ color: 0x0a0808 });
-  const entrance = new THREE.Mesh(new THREE.BoxGeometry(6, 4, 0.5), entranceMat);
-  entrance.position.set(0, 2, 0.3);
+  // Entrada
+  const entrance = new THREE.Mesh(new THREE.BoxGeometry(7, 4, 0.6), new THREE.MeshBasicMaterial({ color: 0x050505 }));
+  entrance.position.set(0, -2, 0);
   facadeGroup.add(entrance);
-
-  // Columnas de la entrada
-  const colMat = new THREE.MeshStandardMaterial({ color: 0xdddddd, roughness: 0.8 });
-  [-3.5, 3.5].forEach(x => {
-    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.25, 5, 8), colMat);
-    col.position.set(x, 2.5, 0.8);
-    col.castShadow = true;
-    facadeGroup.add(col);
-  });
-
-  // Memoria: Fachada
-  facadeGroup.userData = {
-    isMemory: true,
-    memoryTitle: 'COLISEO MENOR',
-    memoryText: 'El Coliseo Menor, también conocido como Indeportes, fue la sede del Gimnasio Kid Dunlop. Su fachada blanca con franjas rojas y azules era un ícono del deporte samario. Aquí se formaron campeones nacionales de boxeo durante décadas.',
-    memoryImg: '/dunlop/download.png'
-  };
-  facadeGroup.traverse(c => { if (c.isMesh) c.userData = facadeGroup.userData; });
 
   // ============================================================
   //  INTERIOR — Compacto, accessible through the entrance
@@ -835,59 +720,33 @@ const dunlopGroup3 = new THREE.Group();
   intWallGlowR.visible = false;
   dunlopGroup3.add(intWallGlowR);
 
-  // ============================================================
-  //  RING DE BOXEO — interior compacto
-  // ============================================================
+  // Ring de boxeo
   const ringGroup = new THREE.Group();
   ringGroup.position.set(0, 0, -3);
   dunlopGroup3.add(ringGroup);
 
   // Plataforma
-  const ringPlatform = new THREE.Mesh(
-    new THREE.BoxGeometry(5.5, 0.45, 5.5),
-    new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.8 })
-  );
-  ringPlatform.position.y = 0.22;
-  ringPlatform.receiveShadow = true;
-  ringPlatform.castShadow = true;
-  ringGroup.add(ringPlatform);
+  const platform = new THREE.Mesh(new THREE.BoxGeometry(7, 0.3, 7), new THREE.MeshStandardMaterial({ color: 0x4a3a2a }));
+  platform.position.y = 0.15;
+  ringGroup.add(platform);
 
-  // 4 postes esquineros
-  const cornerMat = new THREE.MeshStandardMaterial({ color: 0xddaa00, metalness: 0.8, roughness: 0.3 });
-  [[-2.5, -2.5], [2.5, -2.5], [2.5, 2.5], [-2.5, 2.5]].forEach(([cx, cz]) => {
-    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 3, 8), cornerMat);
-    post.position.set(cx, 1.95, cz);
-    post.castShadow = true;
+  // Postes
+  const cornerMat = new THREE.MeshStandardMaterial({ color: 0xddaa00 });
+  [[-3, -3], [3, -3], [3, 3], [-3, 3]].forEach(([x, z]) => {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 3, 8), cornerMat);
+    post.position.set(x, 1.65, z);
     ringGroup.add(post);
   });
 
-  // Cuerdas: 4 niveles rojo/amarillo/azul/rojo
-  const ropeColors = [0xcc2222, 0xddcc22, 0x2244aa, 0xcc2222];
-  ropeColors.forEach((color, i) => {
-    const ropeMat = new THREE.MeshStandardMaterial({ color, roughness: 0.5 });
-    const ropeY = 0.9 + i * 0.6;
-    [-2.5, 2.5].forEach(z => {
-      const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 5, 4), ropeMat);
-      rope.rotation.z = Math.PI / 2;
-      rope.position.set(0, ropeY, z);
-      ringGroup.add(rope);
-    });
-    [-2.5, 2.5].forEach(x => {
-      const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 5, 4), ropeMat);
-      rope.rotation.x = Math.PI / 2;
-      rope.position.set(x, ropeY, 0);
+  // Cuerdas
+  [0.8, 1.5].forEach(y => {
+    [[-3, 0], [3, 0], [0, -3], [0, 3]].forEach(([x, z]) => {
+      const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 6, 4), new THREE.MeshStandardMaterial({ color: 0xcc2222 }));
+      if (x === 0) { rope.rotation.z = Math.PI / 2; rope.position.set(0, y, z); }
+      else { rope.rotation.x = Math.PI / 2; rope.position.set(x, y, 0); }
       ringGroup.add(rope);
     });
   });
-
-  // Memoria: Ring
-  ringGroup.userData = {
-    isMemory: true,
-    memoryTitle: 'GIMNASIO KID DUNLOP',
-    memoryText: 'El Gimnasio Kid Dunlop, ubicado en el Coliseo Menor de Santa Marta, fue el templo del boxeo samario. Aquí entrenó Jose Dolores Erebrie, "Kid Dunlop", el gran pugilista colombiano que en 1950 se preparó para la pelea del título nacional. El ring, con sus cuerdas rojas, amarillas y azules, fue escenario de generaciones de boxeadores.',
-    memoryImg: '/dunlop/download (1).png'
-  };
-  ringGroup.traverse(c => { if (c.isMesh) c.userData = ringGroup.userData; });
 
   // ============================================================
   //  SACOS DE BOXEO — colgando del techo
