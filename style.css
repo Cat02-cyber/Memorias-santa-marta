@@ -407,6 +407,7 @@ html, body {
   max-height: 280px;
   object-fit: contain;
   filter: saturate(0.6) contrast(1.1) brightness(0.95);
+  animation: glitch-img 4s infinite;
 }
 @keyframes glitch-img {
   0%,100%  { filter: saturate(0.6) contrast(1.1) brightness(0.95); transform: none; }

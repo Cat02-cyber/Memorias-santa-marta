@@ -313,8 +313,8 @@ const MAT = {
   createHubPortal('Ancón', 'ancon', -5.63, -3.25, 0x00b4b4, 0xc0006a);
   // Teatro Variedades
   createHubPortal('Variedades', 'variedades', -2.22, -6.11, 0xffaa00, 0xbb00cc);
-  // Gimnasio Kid Dunlop
-  createHubPortal('Dunlop', 'dunlop', 0, -7.5, 0xff4444, 0x220000);
+  // Gimnasio Kid Dunlop — OCULTO
+  // createHubPortal('Dunlop', 'dunlop', 0, -7.5, 0xff4444, 0x220000);
   // Juegos Polideportivo
   createHubPortal('Juegos', 'juegos', 2.22, -6.11, 0xddee33, 0x228811);
   // La Rueda y el Avión
@@ -394,7 +394,7 @@ waterMesh.receiveShadow = true;
 waterMesh.userData = {
   isMemory: true,
   memoryTitle: 'EL BARRIO ANCÓN',
-  memoryText: 'Barrio de pescadores ubicado entre el puerto marítimo y las vías férreas del tren bananero. Conformado por tres calles: El Mangle, Tinglado y Taganguilla. Originalmente campamento de obreros jamaicanos que construyeron el ferrocarril y muelles. En la década de 1920, pescadores samarios ocuparon las casas de madera abandonadas. Fue el barrio más tradicional de Santa Marta, por donde llegaba la música de Curazao y Aruba. Sus fiestas de la Virgen del Carmen eran un acontecimiento cultural con procesión de lanchas por el mar. Desapareció en la década de 1970 con la expansión de Puertos de Colombia.',
+  memoryText: '"Mi papá me contaba que por aquí quedaba el Ancón. Antes de que construyeran el puerto moderno, todo esto era un barrio de pescadores de tres calles: El Mangle, Tinglado y Taganguilla. Decía que el olor a salitre se mezclaba con la música que llegaba de Curazao en los barcos. Ya no queda ni la sombra de esas casas de madera, solo las historias que nos dejaron."',
   memoryImg: '/11150850_834729173230397_2710019065453318108_n.jpg'
 };
 anconGroup.add(waterMesh);
@@ -931,7 +931,7 @@ const dunlopGroup3 = new THREE.Group();
   screenWall.userData = {
     isMemory: true,
     memoryTitle: 'TEATRO VARIEDADES',
-    memoryText: 'Teatro Variedades, filial de Cine Colombia. Ubicado entre calles 11 y 12 con carrera cuarta. Dividido en dos partes: la zona techada con abanicos y sillas individuales, y la zona descubierta más cerca del telón, separada por una paredilla con púas. Una función vespertina y dos nocturnas. 1,300 asientos.',
+    memoryText: '"Mi mamá iba a las matinales del Variedades. Me contaba que era a cielo abierto, sin techo ni abanicos. Estaba dividido en dos por una paredilla con unas púas para que nadie se pasara. Siempre me decía lo enorme que era eso, que ahí cabía medio pueblo."',
     memoryImg: '/images (9).jpg'
   };
   variedadesGroup.add(screenWall);
@@ -974,7 +974,7 @@ const dunlopGroup3 = new THREE.Group();
   screenPlane.userData = {
     isMemory: true,
     memoryTitle: 'TEATRO VARIEDADES',
-    memoryText: 'Teatro Variedades, filial de Cine Colombia. Ubicado entre calles 11 y 12 con carrera cuarta. Dividido en dos partes: la zona techada con abanicos y sillas individuales, y la zona descubierta más cerca del telón, separada por una paredilla con púas. Una función vespertina y dos nocturnas. 1,300 asientos.',
+    memoryText: '"Mi mamá iba a las matinales del Variedades. Me contaba que era a cielo abierto, sin techo ni abanicos. Estaba dividido en dos por una paredilla con unas púas para que nadie se pasara. Siempre me decía lo enorme que era eso, que ahí cabía medio pueblo."',
     memoryImg: '/images (9).jpg'
   };
   drawStandbyScreen();
@@ -1304,7 +1304,7 @@ const dunlopGroup3 = new THREE.Group();
   polStation.userData = {
     isMemory: true,
     memoryTitle: 'EL POLVORÍN — ESTACIÓN DE TREN',
-    memoryText: 'El Polvorín fue la primera estación del ferrocarril de Santa Marta, inaugurado en 1887. Fue el primer ferrocarril de Colombia. Sus instalaciones, incluyendo bodegas y talleres, constituyeron el motor económico de la ciudad durante décadas antes de que el tren dejara de operar.',
+    memoryText: '"En nuestras charlas, mi papá siempre mencionaba el Polvorín. Fue la primera estación de trenes que hubo. Me decía que su abuelo conoció eso lleno de movimiento, locomotoras a vapor y bodegas gigantes, mucho antes de que construyeran la estación nueva y el tren dejara de existir."',
     memoryImg: null
   };
   polStation.traverse(c => { if (c.isMesh) c.userData = polStation.userData; });
