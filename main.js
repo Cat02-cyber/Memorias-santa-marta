@@ -35,6 +35,7 @@ const AUDIO_FILES = {
   variedades: ['/audio/freesound_community-small-film-projector-26188.mp3', '/audio/freesound_community-people-talking-in-cinema-before-movie-starts-65662.mp3'],
   juegos:    '/audio/freesound_community-quiet-park-6781.mp3',
   rueda:     '/audio/freesound_community-a-gentle-breeze-wind-4-14681.mp3',
+  dunlop:    '/audio/freesound_community-quiet-park-6781.mp3',
 };
 
 let currentAmbience = null;
@@ -307,11 +308,13 @@ const MAT = {
     scene._hubInteractables.push(pMesh, cMesh);
   }
 
-  // 4 portales en semicírculo simétrico (radio 6.5, ángulos: 210°, 250°, 290°, 330°)
+  // 5 portales en semicírculo
   // Ancón
   createHubPortal('Ancón', 'ancon', -5.63, -3.25, 0x00b4b4, 0xc0006a);
   // Teatro Variedades
   createHubPortal('Variedades', 'variedades', -2.22, -6.11, 0xffaa00, 0xbb00cc);
+  // Gimnasio Kid Dunlop
+  createHubPortal('Dunlop', 'dunlop', 0, -7.5, 0xff4444, 0x220000);
   // Juegos Polideportivo
   createHubPortal('Juegos', 'juegos', 2.22, -6.11, 0xddee33, 0x228811);
   // La Rueda y el Avión
@@ -568,120 +571,252 @@ buildCanoe( 14, 6.5, 0.1);
 
 
 // ============================================================
-//  GIMNASIO KID DUNLOP 3.0 (RECONSTRUCCIÓN FIEL)
+//  GIMNASIO KID DUNLOP — Coliseo Menor
+//  "Jose Dolores Erebrie, el gran pugilista samario"
 // ============================================================
 const dunlopGroup3 = new THREE.Group();
 {
-  // 1. FACHADA COLISEO MENOR
-  const facadeMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-  const facade = new THREE.Mesh(new THREE.BoxGeometry(22, 12, 0.5), facadeMat);
-  facade.position.set(0, 6, 50);
-  dunlopGroup3.add(facade);
-  
-  // Agregar aquí textura de fachada usando 'dunlop/new/download.png'
+  // --- Iluminación: interior industrial ---
+  const dunlopAmb = new THREE.AmbientLight(0xccbbaa, 0.8);
+  dunlopGroup3.add(dunlopAmb);
 
-// 2. INTERIOR GYM
-  // Paredes: patrón blanco (arriba) / azul (medio) / rojo (abajo)
-  // Basado en download(1).png y 005512.png
-  const wallGroup = new THREE.Group();
-  dunlopGroup3.add(wallGroup);
+  const dunlopSun = new THREE.DirectionalLight(0xffeedd, 1.2);
+  dunlopSun.position.set(5, 10, 8);
+  dunlopSun.castShadow = true;
+  dunlopSun.shadow.mapSize.set(1024, 1024);
+  dunlopGroup3.add(dunlopSun);
 
-  const createWallSegment = (width, height, z, color) => {
-    const geo = new THREE.BoxGeometry(width, height, 0.2);
-    const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.9 });
+  // Luz cálida de foco sobre el ring
+  const ringSpot = new THREE.PointLight(0xffcc88, 2.0, 15);
+  ringSpot.position.set(0, 6, 0);
+  dunlopGroup3.add(ringSpot);
+
+  // Luz tenue roja de las paredes
+  const wallGlow = new THREE.PointLight(0xff2200, 0.4, 20);
+  wallGlow.position.set(-8, 3, -5);
+  dunlopGroup3.add(wallGlow);
+
+  // --- Cielo / Techo ---
+  const skyGeo = new THREE.SphereGeometry(80, 12, 8);
+  const skyMat = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    uniforms: {
+      topColor:    { value: new THREE.Color(0x0a0808) },
+      bottomColor: { value: new THREE.Color(0x1a1010) },
+    },
+    vertexShader: `
+      varying vec3 vPos;
+      void main() {
+        vPos = (modelMatrix * vec4(position, 1.0)).xyz;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 topColor;
+      uniform vec3 bottomColor;
+      varying vec3 vPos;
+      void main() {
+        float h = clamp(normalize(vPos).y * 0.5 + 0.5, 0.0, 1.0);
+        gl_FragColor = vec4(mix(bottomColor, topColor, h), 1.0);
+      }
+    `
+  });
+  dunlopGroup3.add(new THREE.Mesh(skyGeo, skyMat));
+
+  // --- Piso de madera ---
+  const floorMat = new THREE.MeshStandardMaterial({ color: 0x5a3a1a, roughness: 0.85, flatShading: true });
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), floorMat);
+  floor.rotation.x = -Math.PI / 2;
+  floor.receiveShadow = true;
+  dunlopGroup3.add(floor);
+
+  // --- Paredes: patrón blanco/rojo/azul ---
+  // Pared trasera (detrás del ring)
+  const backWallGroup = new THREE.Group();
+  dunlopGroup3.add(backWallGroup);
+
+  const createColoredWall = (width, height, z, color) => {
+    const geo = new THREE.BoxGeometry(width, height, 0.3);
+    const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.9, flatShading: true });
     const wall = new THREE.Mesh(geo, mat);
     wall.position.set(0, height / 2, z);
+    wall.receiveShadow = true;
     return wall;
   };
 
-  // Paredes laterales (simplificado para ejemplo)
-  const wallWhite = createWallSegment(24, 4, -12, 0xffffff);
-  const wallBlue = createWallSegment(24, 1, -12, 0x0000ff);
-  const wallRed = createWallSegment(24, 1, -12, 0xff0000);
-  
-  wallWhite.position.y = 5;
-  wallBlue.position.y = 3;
-  wallRed.position.y = 1;
-  
-  wallGroup.add(wallWhite, wallBlue, wallRed);
+  // Pared trasera z = -12
+  backWallGroup.add(createColoredWall(24, 4.5, -12, 0xeeeeee));  // Blanco arriba
+  backWallGroup.add(createColoredWall(24, 1.5, -12, 0xcc2222));  // Rojo medio
+  backWallGroup.add(createColoredWall(24, 1.5, -12, 0x2244aa));  // Azul abajo
+  backWallGroup.children[0].position.y = 6.25;
+  backWallGroup.children[1].position.y = 3.5;
+  backWallGroup.children[2].position.y = 1.5;
 
-  // Piso de madera
-  const floor = new THREE.Mesh(
-    new THREE.PlaneGeometry(24, 24),
-    new THREE.MeshStandardMaterial({ color: 0x4a2e19, roughness: 0.8 })
+  // Pared lateral izquierda x = -12
+  [-12, 12].forEach(xPos => {
+    const sideGroup = new THREE.Group();
+    dunlopGroup3.add(sideGroup);
+    const w1 = createColoredWall(24, 4.5, 0, 0xeeeeee);
+    const w2 = createColoredWall(24, 1.5, 0, 0xcc2222);
+    const w3 = createColoredWall(24, 1.5, 0, 0x2244aa);
+    w1.position.y = 6.25;
+    w2.position.y = 3.5;
+    w3.position.y = 1.5;
+    w1.rotation.y = Math.PI / 2;
+    w2.rotation.y = Math.PI / 2;
+    w3.rotation.y = Math.PI / 2;
+    w1.position.x = xPos;
+    w2.position.x = xPos;
+    w3.position.x = xPos;
+    sideGroup.add(w1, w2, w3);
+  });
+
+  // --- Ventanas superiores (celosías) ---
+  const ventMat = new THREE.MeshBasicMaterial({ color: 0x111111 });
+  for (let x = -10; x <= 10; x += 5) {
+    const vent = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 0.1), ventMat);
+    vent.position.set(x, 7.5, -11.8);
+    dunlopGroup3.add(vent);
+  }
+
+  // --- Techo con vigas metálicas ---
+  const beamMat = new THREE.MeshStandardMaterial({ color: 0x555555, roughness: 0.6, metalness: 0.7 });
+  for (let z = -10; z <= 10; z += 5) {
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(24, 0.15, 0.15), beamMat);
+    beam.position.set(0, 8.5, z);
+    dunlopGroup3.add(beam);
+  }
+  // Vigas transversales
+  for (let x = -10; x <= 10; x += 5) {
+    const beamT = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 20), beamMat);
+    beamT.position.set(x, 8.5, 0);
+    dunlopGroup3.add(beamT);
+  }
+  // Plancha de techo
+  const roofPlate = new THREE.Mesh(
+    new THREE.PlaneGeometry(24, 20),
+    new THREE.MeshStandardMaterial({ color: 0x2a2a2a, roughness: 0.9, side: THREE.DoubleSide })
   );
-  floor.rotation.x = -Math.PI / 2;
-  dunlopGroup3.add(floor);
+  roofPlate.rotation.x = Math.PI / 2;
+  roofPlate.position.y = 8.5;
+  dunlopGroup3.add(roofPlate);
 
-  // 3. RING DE BOXEO (Detallado)
+  // --- RING DE BOXEO ---
   const ringGroup = new THREE.Group();
+  ringGroup.position.set(0, 0, 0);
   dunlopGroup3.add(ringGroup);
 
-  // Plataforma madera
-  const platform = new THREE.Mesh(
-    new THREE.BoxGeometry(7, 0.4, 7),
-    new THREE.MeshStandardMaterial({ color: 0x4a2e19, roughness: 0.8 }) 
+  // Plataforma de madera del ring
+  const ringPlatform = new THREE.Mesh(
+    new THREE.BoxGeometry(7, 0.5, 7),
+    new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: 0.8, flatShading: true })
   );
-  platform.position.y = 0.2;
-  platform.receiveShadow = true;
-  ringGroup.add(platform);
-  
-  // Cuerdas rojas detalladas
-  const ropeColors = [0xee2233, 0xffffff, 0xee2233];
-  const cornerX = 3.5;
-  const cornerZ = 3.5;
-  const cornerPosts = [[cornerX, cornerZ], [-cornerX, cornerZ], [-cornerX, -cornerZ], [cornerX, -cornerZ]];
+  ringPlatform.position.y = 0.25;
+  ringPlatform.receiveShadow = true;
+  ringPlatform.castShadow = true;
+  ringGroup.add(ringPlatform);
 
-  // Postes
-  cornerPosts.forEach(([px, pz]) => {
-    const post = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.1, 0.1, 3, 8),
-      new THREE.MeshStandardMaterial({ color: 0xddaa00, metalness: 0.8, roughness: 0.2 })
-    );
-    post.position.set(px, 1.5, pz);
+  // Esquinas del ring (4 postes dorados)
+  const cornerMat = new THREE.MeshStandardMaterial({ color: 0xddaa00, metalness: 0.8, roughness: 0.3 });
+  const cornerPositions = [[-3.2, -3.2], [3.2, -3.2], [3.2, 3.2], [-3.2, 3.2]];
+  cornerPositions.forEach(([cx, cz]) => {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 3.5, 8), cornerMat);
+    post.position.set(cx, 2.25, cz);
+    post.castShadow = true;
     ringGroup.add(post);
   });
-  
-  // 4. SACOS (Basado en 005512.png)
+
+  // Cuerdas del ring (4 niveles, 3 colores: rojo, amarillo, azul)
+  const ropeColors = [0xcc2222, 0xddcc22, 0x2244aa, 0xcc2222];
+  ropeColors.forEach((color, i) => {
+    const ropeMat = new THREE.MeshStandardMaterial({ color, roughness: 0.5 });
+    const ropeY = 1.2 + i * 0.7;
+
+    // 4 lados del ring
+    [[-3.2, 3.2, -3.2, -3.2], [3.2, 3.2, -3.2, -3.2], [-3.2, 3.2, 3.2, 3.2], [-3.2, 3.2, 3.2, 3.2]].forEach(([x1, x2, z1, z2], side) => {
+      const ropeGeo = new THREE.CylinderGeometry(0.025, 0.025, 6.4, 4);
+      const rope = new THREE.Mesh(ropeGeo, ropeMat);
+      rope.rotation.z = Math.PI / 2;
+      if (side < 2) {
+        rope.position.set(0, ropeY, side === 0 ? -3.2 : 3.2);
+      } else {
+        rope.rotation.y = Math.PI / 2;
+        rope.position.set(side === 2 ? -3.2 : 3.2, ropeY, 0);
+      }
+      ringGroup.add(rope);
+    });
+  });
+
+  // --- SACOS DE BOXEO ---
   const sacosGroup = new THREE.Group();
   dunlopGroup3.add(sacosGroup);
-  
-  const createSaco = (x, z, color, size) => {
+
+  function createSaco(x, y, z, color, scale = 1) {
+    const sacoMat = new THREE.MeshStandardMaterial({ color, roughness: 0.7, flatShading: true });
+    // Cuerpo del saco (cilindro redondeado)
     const saco = new THREE.Mesh(
-      new THREE.CylinderGeometry(size, size, size * 5, 8),
-      new THREE.MeshStandardMaterial({ color, roughness: 0.9 })
+      new THREE.CylinderGeometry(0.3 * scale, 0.35 * scale, 1.6 * scale, 10),
+      sacoMat
     );
-    saco.position.set(x, 5, z);
+    saco.position.set(x, y, z);
+    saco.castShadow = true;
     sacosGroup.add(saco);
-  };
-  
-  createSaco(-5, -5, 0x000000, 0.3); // Negro
-  createSaco(5, 5, 0xff0000, 0.25);  // Rojo
-  createSaco(0, -6, 0xffffff, 0.28); // Blanco (Everlast)
-  
-  // 5. MEMORIA (con imágenes reales)
+    // Cadena de suspensión
+    const chainMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.9, roughness: 0.3 });
+    const chain = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 2.5, 4), chainMat);
+    chain.position.set(x, y + 1.6 * scale + 1.25, z);
+    sacosGroup.add(chain);
+    // Gancho
+    const hook = new THREE.Mesh(new THREE.TorusGeometry(0.08, 0.015, 6, 8, Math.PI), chainMat);
+    hook.position.set(x, y + 1.6 * scale + 2.5, z);
+    sacosGroup.add(hook);
+    return saco;
+  }
+
+  // Sacos pegados al techo (como en las imágenes)
+  createSaco(-6, 3.5, -2, 0xcc1111, 1.2);   // Rojo Everlast
+  createSaco(-3, 3.2, -4, 0x111111, 1.0);   // Negro
+  createSaco(6, 3.5, 1, 0x111111, 1.1);     // Negro grande
+  createSaco(8, 3.3, -3, 0x228833, 0.9);    // Verde
+
+  // --- MEMORIA: Ring como nodo interactivo ---
   ringGroup.userData = {
     isMemory: true,
     memoryTitle: 'GIMNASIO KID DUNLOP',
-    memoryText: 'El Gimnasio Kid Dunlop fue el templo del boxeo samario. Generaciones de boxeadores sudaron aquí.',
-    memoryImg: 'dunlop/download (1).png' // Imagen del ring
+    memoryText: 'El Gimnasio Kid Dunlop, ubicado en el Coliseo Menor de Santa Marta, fue el templo del boxeo samario. Aquí entrenó Jose Dolores Erebrie, "Kid Dunlop", el gran pugilista colombiano que en 1950 se preparó para la pelea del título nacional. Generaciones de boxeadores sudaron en este ring de cuerdas rojas, amarillas y azules.',
+    memoryImg: '/dunlop/download (1).png'
   };
   ringGroup.traverse(c => { if (c.isMesh) c.userData = ringGroup.userData; });
 
-  // 6. MEMORIAL KID DUNLOP (Foto antigua)
+  // --- MEMORIA: Memorial Kid Dunlop (foto antigua en la pared) ---
   const loader = new THREE.TextureLoader();
-  const dunlopTex = loader.load('dunlop/download (2).png');
-  const memorialGeo = new THREE.PlaneGeometry(2, 2);
+  const dunlopTex = loader.load('/dunlop/kid_dunlop.png');
+  const memorialGeo = new THREE.PlaneGeometry(2.5, 3);
   const memorialMat = new THREE.MeshBasicMaterial({ map: dunlopTex });
   const memorial = new THREE.Mesh(memorialGeo, memorialMat);
-  memorial.position.set(0, 3, -11.9); // En la pared
+  memorial.position.set(0, 4, -11.7);
   dunlopGroup3.add(memorial);
-  
+
   memorial.userData = {
     isMemory: true,
     memoryTitle: 'KID DUNLOP',
-    memoryText: 'Kid Dunlop: leyenda del boxeo.',
-    memoryImg: 'dunlop/download (2).png'
+    memoryText: 'Jose Dolores Erebrie, conocido como "Kid Dunlop", fue el gran pugilista de Santa Marta. En esta foto de 1950, tomada por el Archivo del Diario El Heraldo, se le ve en su gimnasio de entrenamiento antes de la pelea por el título nacional. Su legado vive en cada boxeador que pasó por el Coliseo Menor.',
+    memoryImg: '/dunlop/kid_dunlop.png'
+  };
+
+  // --- MEMORIA: Fachada del Coliseo Menor ---
+  const facadeTex = loader.load('/dunlop/download.png');
+  const facadeGeo = new THREE.PlaneGeometry(6, 4);
+  const facadeMat2 = new THREE.MeshBasicMaterial({ map: facadeTex });
+  const facadePic = new THREE.Mesh(facadeGeo, facadeMat2);
+  facadePic.position.set(-8, 4.5, -11.7);
+  dunlopGroup3.add(facadePic);
+
+  facadePic.userData = {
+    isMemory: true,
+    memoryTitle: 'COLISEO MENOR',
+    memoryText: 'El Coliseo Menor, también conocido como Indeportes, fue la sede del Gimnasio Kid Dunlop. Su fachada blanca con franjas rojas y azules era un ícono del deporte samario. Aquí se formaron campeones nacionales de boxeo durante décadas.',
+    memoryImg: '/dunlop/download.png'
   };
 }
 
@@ -2155,12 +2290,14 @@ window.addEventListener('click', () => {
   if (!controls.isLocked) return;
   raycaster.setFromCamera(centerVec, camera);
   
-  let targets = [];
-  if (currentScene === 'hub') targets = hubGroup.children;
-  else if (currentScene === 'ancon') targets = anconGroup.children;
-  else if (currentScene === 'variedades') targets = variedadesGroup.children;
-  else if (currentScene === 'juegos') targets = juegosGroup.children;
-  else if (currentScene === 'rueda') targets = ruedaGroup.children;
+    let targets = [];
+    if (currentScene === 'hub') targets = hubGroup.children;
+    else if (currentScene === 'ancon') targets = anconGroup.children;
+    else if (currentScene === 'variedades') targets = variedadesGroup.children;
+    else if (currentScene === 'juegos') targets = juegosGroup.children;
+    else if (currentScene === 'rueda') targets = ruedaGroup.children;
+    else if (currentScene === 'dunlop') targets = dunlopGroup3.children;
+  else if (currentScene === 'dunlop') targets = dunlopGroup3.children;
 
 
   const hits = raycaster.intersectObjects(targets, true);
@@ -2214,6 +2351,13 @@ window.addEventListener('click', () => {
         currentScene = 'rueda';
         startSceneAmbience('rueda');
         camera.position.set(0, 1.6, 15);
+      } else if (d.target === 'dunlop') {
+        scene.remove(hubGroup);
+        scene.add(dunlopGroup3);
+        scene.fog = new THREE.FogExp2(0x1a1a2e, 0.03);
+        currentScene = 'dunlop';
+        startSceneAmbience('dunlop');
+        camera.position.set(0, 1.6, 12);
       }
       document.getElementById('ui-layer').classList.add('visible');
 
@@ -2397,6 +2541,7 @@ if (rewindBtn) {
         else if (currentScene === 'variedades') scene.remove(variedadesGroup);
         else if (currentScene === 'juegos') scene.remove(juegosGroup);
         else if (currentScene === 'rueda') scene.remove(ruedaGroup);
+        else if (currentScene === 'dunlop') scene.remove(dunlopGroup3);
         
         scene.add(hubGroup);
         scene.fog = new THREE.FogExp2(0x04040f, 0.06);
@@ -2481,6 +2626,9 @@ function animate() {
     } else if (currentScene === 'rueda') {
       camera.position.x = Math.max(-20, Math.min(20, camera.position.x));
       camera.position.z = Math.max(-20, Math.min(20, camera.position.z));
+    } else if (currentScene === 'dunlop') {
+      camera.position.x = Math.max(-10, Math.min(10, camera.position.x));
+      camera.position.z = Math.max(-5, Math.min(15, camera.position.z));
     } else { // hub
       camera.position.x = Math.max(-9, Math.min(9, camera.position.x));
       camera.position.z = Math.max(-7, Math.min(10, camera.position.z));
@@ -2654,6 +2802,7 @@ function animate() {
           // else if (d.target === 'dunlop') labelText = 'ENTRAR A GIMNASIO DUNLOP';
           else if (d.target === 'juegos') labelText = 'ENTRAR A JUEGOS DEL POLIDEPORTIVO';
           else if (d.target === 'rueda') labelText = 'ENTRAR A LA LA RUEDA Y EL AVIÓN';
+          else if (d.target === 'dunlop') labelText = 'ENTRAR A GIMNASIO DUNLOP';
         } else if (d.isSwitch) {
           foundInteractable = true;
           labelText = isMoviePlaying ? 'APAGAR PROYECTOR' : 'INICIAR PELÍCULA';
